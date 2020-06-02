@@ -60,6 +60,24 @@ function __journal_new
     end
 end
 
+function __journal_search
+    # Call with either -t or --tags
+    # Accepts multiple values separated with commas
+    set -l options (fish_opt -s t -l tags -r --multiple-vals)
+    argparse $options -- $argv
+
+    if test -n "$_flag_t"
+        set -l tags (string split "," "$_flag_t")
+        set -l pattern (string join '|' $tags)
+        for match in (grep -R -Ewo -- $pattern $data_dir | awk -F ':' '{ print $1 }' | sort | uniq)
+            cat $match
+            echo ""
+        end
+    end
+
+    # TODO: Add search by title
+end
+
 function __journal_list_tags
     # Gather tags but without the leading 'tags: '
     # and skip duplicates
@@ -81,8 +99,9 @@ end
 switch "$argv[1]"
     case "tags"
         __journal_list_tags
+    case "search"
+        set -e argv[1]
+        __journal_search $argv
     case ""
         __journal_new
 end
-
-# // vim: set ft=fish:
