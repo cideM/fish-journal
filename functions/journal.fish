@@ -150,31 +150,22 @@ function __journal_search
 end
 
 function __journal_list_tags
-    # Gather tags but without the leading 'tags: '
-    # and skip duplicates
-    set -l tags
-    for line in (grep -hR "tags:" "$FISH_JOURNAL_DIR")
-        for t in (string split " " "$line")
-            if not test (string trim "$t") = "tags:";
-                and not contains $t $tags
-                set -a tags "$t"
-            end
-        end
-    end
+    cat $FISH_JOURNAL_DIR/*/tags
+end
 
-    for t in $tags
-        echo $t
-    end
+function __journal_list_titles
+    cat $FISH_JOURNAL_DIR/*/title
 end
 
 function journal -a cmd -d "Fish journal"
     switch "$cmd"
         case tags
             __journal_list_tags
+        case titles
+            __journal_list_titles
         case search
             __journal_search $argv
         case \*
             __journal_new $argv
     end
 end
-
