@@ -11,10 +11,9 @@ function __journal_entry_template
     echo ""
 end
 
-# TODO: Add -T --title option
-# TODO: Add -d --date option (use human language insofar date supports it)
-# TODO: Editor opens only for body of entry now
-# TODO: store 4 files: title, body, tags, date. Folder name is date + lower cased and escaped title probably style=var (check man string escape)
+# TODO: List entries
+# TODO: Usage
+# DONE: Remove entire directory if user didn't change anything
 function __journal_dir_name
     echo "$FISH_JOURNAL_DIR"/(cat /dev/urandom | tr -cd 'a-f0-9' | head -c 10)
 end
@@ -86,7 +85,7 @@ function __journal_new
     # if user actually made any changes to the template
     if cmp "$entry_text" "$tmpfile" > /dev/null
         echo "You didn't change the default template, so I'll delete the entry again"
-        rm "$entry_text"
+        rm -r $entry_dir
     else
         echo "Created new journal entry $entry_text"
     end
@@ -95,7 +94,8 @@ end
 function __journal_search
     set -l options                                 \
         (fish_opt -s t -l tags -r --multiple-vals) \
-        (fish_opt -s T -l title -r)
+        (fish_opt -s T -l title -r)                \
+        (fish_opt -s f -l filename-only)
     argparse $options -- $argv
 
     # For each category (tags, title), find all matches. Then return 
@@ -141,11 +141,17 @@ function __journal_search
     set -l sorted (for v in $results_dirs; printf '%s "%s"\n' $v (cat $v/date); end | sort -k2 -r | awk '{ print $1 }')
     
     for path in $sorted
-        echo '--------------------'
-        echo $path
-        cat $path/date
-        cat $path/title
-        cat $path/body
+        if set -q _flag_f
+            for f in $path/*
+                echo $f
+            end
+        else
+            echo '--------------------'
+            echo $path
+            cat $path/date
+            cat $path/title
+            cat $path/body
+        end
     end
 end
 
