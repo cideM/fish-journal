@@ -12,27 +12,63 @@ function __journal_entry_template
 end
 
 # TODO: Usage
+# TODO: name functions etc in the same way not some fish__ and others __jorunal
+# TODO: from until use expr and compare dates  for this
 function __journal_dir_name
     echo "$FISH_JOURNAL_DIR"/(cat /dev/urandom | tr -cd 'a-f0-9' | head -c 10)
 end
 
 function __journal_list_entries_sorted 
-    set -l options                \
-        (fish_opt -s n -l number -r) \
-        (fish_opt -s f -l filename-only)
+    set -l options                       \
+        (fish_opt -s n -l number -r)     \
+        (fish_opt -s f -l filename-only) \
+        (fish_opt -s F -l from -r)       \
+        (fish_opt -s U -l until -r)
     argparse -i $options -- $argv
     
     set -l number_entries_to_show
-
+    
     if set -q _flag_n
         set number_entries_to_show $_flag_n
     else
         set number_entries_to_show (count $argv)
     end
 
+    set -l date_range_result 
+
+    # Compare the date of each entry against the --from and --until values
+    # by using "expr" and lexicographic comparison
+    for v in $argv[1..$number_entries_to_show]
+        set -l pass 1
+
+        set -l date_entry (cat $v/date)
+
+        # --from
+        if set -q _flag_F
+            set -l cmp_date (date -d $_flag_F +$__fish_journal_date_format)
+
+            if not test (expr $cmp_date "<=" $date_entry) -ne 0
+                set pass 0
+            end
+        end
+
+        # --until
+        if set -q _flag_U
+            set -l cmp_date (date -d $_flag_U +$__fish_journal_date_format)
+
+            if not test (expr $cmp_date ">=" $date_entry) -ne 0
+                set pass 0
+            end
+        end
+
+        if test $pass -ne 0
+            set -a date_range_result $v
+        end
+    end
+
     # Sort the results in descending order based on the date in each 
     # entrys' "date" file. Use lexicographic sort thanks to the date format
-    set -l sorted (for v in $argv[1..$number_entries_to_show]; printf '%s "%s"\n' $v (cat $v/date); end | sort -k2 -r | awk '{ print $1 }')
+    set -l sorted (for v in $date_range_result; printf '%s "%s"\n' $v (cat $v/date); end | sort -k2 -r | awk '{ print $1 }')
     
     for path in $sorted
         if set -q _flag_f
