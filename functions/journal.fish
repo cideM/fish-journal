@@ -11,11 +11,46 @@ function __journal_entry_template
     echo ""
 end
 
-# TODO: List entries
 # TODO: Usage
-# DONE: Remove entire directory if user didn't change anything
 function __journal_dir_name
     echo "$FISH_JOURNAL_DIR"/(cat /dev/urandom | tr -cd 'a-f0-9' | head -c 10)
+end
+
+function __journal_list_entries_sorted 
+    set -l options                \
+        (fish_opt -s n -l number -r) \
+        (fish_opt -s f -l filename-only)
+    argparse -i $options -- $argv
+    
+    set -l number_entries_to_show
+
+    if set -q _flag_n
+        set number_entries_to_show $_flag_n
+    else
+        set number_entries_to_show (count $argv)
+    end
+
+    # Sort the results in descending order based on the date in each 
+    # entrys' "date" file. Use lexicographic sort thanks to the date format
+    set -l sorted (for v in $argv[1..$number_entries_to_show]; printf '%s "%s"\n' $v (cat $v/date); end | sort -k2 -r | awk '{ print $1 }')
+    
+    for path in $sorted
+        if set -q _flag_f
+            for f in $path/*
+                echo $f
+            end
+        else
+            echo '--------------------'
+            echo $path
+            cat $path/date
+            cat $path/title
+            cat $path/body
+        end
+    end
+end
+
+function __journal_list
+    __journal_list_entries_sorted $FISH_JOURNAL_DIR/* $argv
 end
 
 function __journal_new
@@ -36,7 +71,7 @@ function __journal_new
     set -l options                              \
         (fish_opt -s t -l tags -r --multiple-vals) \
         (fish_opt -s T -l title -r)                \
-        (fish_opt -s d -l date -r)
+   
     argparse $options -- $argv
 
     # Store date
@@ -75,7 +110,6 @@ function __journal_new
     "$template" > "$tmpfile"
 
     if not set -q EDITOR 
-        echo '$EDITOR not set, exiting'
         exit 1
     end
 
@@ -94,9 +128,8 @@ end
 function __journal_search
     set -l options                                 \
         (fish_opt -s t -l tags -r --multiple-vals) \
-        (fish_opt -s T -l title -r)                \
-        (fish_opt -s f -l filename-only)
-    argparse $options -- $argv
+        (fish_opt -s T -l title -r)
+    argparse -i $options -- $argv
 
     # For each category (tags, title), find all matches. Then return 
     # the intersection of the matches. That's how this search works in a 
@@ -136,22 +169,11 @@ function __journal_search
         end
     end
 
-    # Sort the results in descending order based on the date in each 
-    # entrys' "date" file. Use lexicographic sort thanks to the date format
-    set -l sorted (for v in $results_dirs; printf '%s "%s"\n' $v (cat $v/date); end | sort -k2 -r | awk '{ print $1 }')
-    
-    for path in $sorted
-        if set -q _flag_f
-            for f in $path/*
-                echo $f
-            end
-        else
-            echo '--------------------'
-            echo $path
-            cat $path/date
-            cat $path/title
-            cat $path/body
-        end
+    if test -n "$results_dirs"
+        # Passing $argv here will include the options
+        # that were already parsed. According to the Fish
+        # docs this shouldn't be the case. TODO: Create bug report
+        __journal_list_entries_sorted $results_dirs $argv
     end
 end
 
@@ -170,8 +192,11 @@ function journal -a cmd -d "Fish journal"
         case titles
             __journal_list_titles
         case search
-            __journal_search $argv
+            __journal_search $argv[2..-1]
+        case list
+            __journal_list $argv[2..-1]
         case \*
-            __journal_new $argv
+            __journal_new $argv[2..-1]
     end
 end
+#!/usr/bin/env fish
