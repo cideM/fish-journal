@@ -13,7 +13,6 @@ end
 
 # TODO: Usage
 # TODO: name functions etc in the same way not some fish__ and others __jorunal
-# TODO: from until use expr and compare dates  for this
 function __journal_dir_name
     echo "$FISH_JOURNAL_DIR"/(cat /dev/urandom | tr -cd 'a-f0-9' | head -c 10)
 end
