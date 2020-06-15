@@ -227,11 +227,14 @@ function journal -a cmd -d "Fish journal"
         case titles
             __journal_list_titles
         case search
-            __journal_search $argv[2..-1]
+            set -e argv[1]
+            __journal_search
         case list
-            __journal_list $argv[2..-1]
+            set -e argv[1]
+            __journal_list
         case \*
-            __journal_new $argv[2..-1]
+            set -e argv[1]
+            __journal_new
     end
 end
 #!/usr/bin/env fish
