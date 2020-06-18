@@ -12,6 +12,17 @@ function __journal_entry_template
     echo ""
 end
 
+# Takes a date string and formats it in a way, so that
+# it can be used for lexicographic sorting
+function __journal_date_lexicographic
+    # This kinda sorta detects if we're dealing with GNU or BSD date
+    if date --version >/dev/null 2>&1
+        echo (date -d $argv[1] +$__fish_journal_date_format)
+    else
+        echo (date -j -f "%a %b %d %T %Z %Y" $argv[1] +$__fish_journal_date_format)
+    end
+end
+
 # TODO: Usage
 # TODO: name functions etc in the same way not some fish__ and others __jorunal
 function __journal_dir_name
@@ -19,8 +30,6 @@ function __journal_dir_name
 end
 
 function __journal_list_entries_sorted
-    echo $argv
-
     set -l options \
         (fish_opt -s n -l number -r) \
         (fish_opt -s f -l filename-only) \
@@ -49,8 +58,7 @@ function __journal_list_entries_sorted
         if set -q _flag_F
             # This kind of date usage doesn't work on MacOS since the -d
             # flag for BSD date does something completely different than in GNU
-            set -l cmp_date (date -d $_flag_F +$__fish_journal_date_format)
-            echo $cmp_date
+            set -l cmp_date (__journal_date_lexicographic $_flag_F)
             if not test (expr $cmp_date "<=" $date_entry) -ne 0
                 set pass 0
             end
@@ -58,7 +66,7 @@ function __journal_list_entries_sorted
 
         # --until
         if set -q _flag_U
-            set -l cmp_date (date -d $_flag_U +$__fish_journal_date_format)
+            set -l cmp_date (__journal_date_lexicographic $_flag_U)
 
             if not test (expr $cmp_date ">=" $date_entry) -ne 0
                 set pass 0
@@ -92,7 +100,6 @@ end
 function __journal_list
     # This avoids errors from failed glob matches
     set -l matches $FISH_JOURNAL_DIR/*
-    echo $argv
 
     if test (count $matches) -gt 0
         __journal_list_entries_sorted $matches $argv
@@ -117,8 +124,10 @@ function __journal_new
 
     if test -d $entry_dir
         echo "$entry_dir already exists!"
-        echo "This is extremely rare, since these names are generated with the 'random' command."
-        echo "Please just create a new entry one more time. If the problem persists, please create an issue"
+        echo "This is extremely rare, since these names"
+        echo "are generated with the 'random' command."
+        echo "Please just create a new entry one more time."
+        echo "If the problem persists, please create an issue"
         echo "on https://github.com/cideM/fish-journal/"
         exit 1
     end
@@ -127,14 +136,15 @@ function __journal_new
     set -l options \
         (fish_opt -s t -l tags -r --multiple-vals) \
         (fish_opt -s T -l title -r) \
+        (fish_opt -s d -l date -r)
 
     argparse $options -- $argv
 
     # Store date
     if set -q _flag_d
-        echo (date -u -d "$_flag_d" +$__fish_journal_date_format) >$entry_dir/date
+        __journal_date_lexicographic $_flag_d >$entry_dir/date
     else
-        echo (date -u +$__fish_journal_date_format) >$entry_dir/date
+        __journal_date_lexicographic (date) >$entry_dir/date
     end
 
     # Store tags
@@ -242,6 +252,15 @@ function __journal_list_titles
 end
 
 function journal -a cmd -d "Fish journal"
+    set -l options \
+        (fish_opt -s h -l help)
+    argparse -i $options -- $argv
+
+    if set -q _flag_h
+        __journal_help
+        return
+    end
+
     switch "$cmd"
         case tags
             __journal_list_tags
