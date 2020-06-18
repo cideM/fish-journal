@@ -4,6 +4,7 @@
 # https://wiki.archlinux.org/index.php/XDG_Base_Directory
 set -q XDG_DATA_DIR; or set XDG_DATA_DIR "$HOME/.local/share"
 set -q FISH_JOURNAL_DIR; or set FISH_JOURNAL_DIR "$XDG_DATA_DIR/fish_journal"
+set -q FISH_JOURNAL_EXTENSION; or set FISH_JOURNAL_EXTENSION ".md"
 
 set __fish_journal_date_format "%Y-%m-%d %T"
 
@@ -14,26 +15,28 @@ end
 # TODO: Usage
 # TODO: name functions etc in the same way not some fish__ and others __jorunal
 function __journal_dir_name
-    echo "$FISH_JOURNAL_DIR"/(cat /dev/urandom | tr -cd 'a-f0-9' | head -c 10)
+    echo $FISH_JOURNAL_DIR/(random 100000 1000000)
 end
 
-function __journal_list_entries_sorted 
-    set -l options                       \
-        (fish_opt -s n -l number -r)     \
+function __journal_list_entries_sorted
+    echo $argv
+
+    set -l options \
+        (fish_opt -s n -l number -r) \
         (fish_opt -s f -l filename-only) \
-        (fish_opt -s F -l from -r)       \
+        (fish_opt -s F -l from -r) \
         (fish_opt -s U -l until -r)
     argparse -i $options -- $argv
-    
+
     set -l number_entries_to_show
-    
+
     if set -q _flag_n
         set number_entries_to_show $_flag_n
     else
         set number_entries_to_show (count $argv)
     end
 
-    set -l date_range_result 
+    set -l date_range_result
 
     # Compare the date of each entry against the --from and --until values
     # by using "expr" and lexicographic comparison
@@ -45,7 +48,7 @@ function __journal_list_entries_sorted
         # --from
         if set -q _flag_F
             set -l cmp_date (date -d $_flag_F +$__fish_journal_date_format)
-
+            echo $cmp_date
             if not test (expr $cmp_date "<=" $date_entry) -ne 0
                 set pass 0
             end
@@ -68,7 +71,7 @@ function __journal_list_entries_sorted
     # Sort the results in descending order based on the date in each 
     # entrys' "date" file. Use lexicographic sort thanks to the date format
     set -l sorted (for v in $date_range_result; printf '%s "%s"\n' $v (cat $v/date); end | sort -k2 -r | awk '{ print $1 }')
-    
+
     for path in $sorted
         if set -q _flag_f
             for f in $path/*
@@ -85,7 +88,15 @@ function __journal_list_entries_sorted
 end
 
 function __journal_list
-    __journal_list_entries_sorted $FISH_JOURNAL_DIR/* $argv
+    # This avoids errors from failed glob matches
+    set -l matches $FISH_JOURNAL_DIR/*
+    echo $argv
+
+    if test (count $matches) -gt 0
+        __journal_list_entries_sorted $matches $argv
+    else
+        echo "No journal entries found in $FISH_JOURNAL_DIR"
+    end
 end
 
 function __journal_new
@@ -101,40 +112,48 @@ function __journal_new
     end
 
     set -l entry_dir (__journal_dir_name)
+
+    if test -d $entry_dir
+        echo "$entry_dir already exists!"
+        echo "This is extremely rare, since these names are generated with the 'random' command."
+        echo "Please just create a new entry one more time. If the problem persists, please create an issue"
+        echo "on https://github.com/cideM/fish-journal/"
+        exit 1
+    end
     mkdir -p "$entry_dir"
 
-    set -l options                              \
+    set -l options \
         (fish_opt -s t -l tags -r --multiple-vals) \
-        (fish_opt -s T -l title -r)                \
-   
+        (fish_opt -s T -l title -r) \
+
     argparse $options -- $argv
 
     # Store date
     if set -q _flag_d
-        echo (date -u -d "$_flag_d" +$__fish_journal_date_format) > $entry_dir/date
+        echo (date -u -d "$_flag_d" +$__fish_journal_date_format) >$entry_dir/date
     else
-        echo (date -u +$__fish_journal_date_format) > $entry_dir/date
+        echo (date -u +$__fish_journal_date_format) >$entry_dir/date
     end
 
     # Store tags
     if set -q _flag_t
         for tag in "$_flag_t"
-            echo "$tag" >> "$entry_dir"/tags
+            echo "$tag" >>"$entry_dir"/tags
         end
     else
         touch "$entry_dir"/tags
     end
 
     if set -q _flag_T
-        echo "$_flag_T" > "$entry_dir"/title
+        echo "$_flag_T" >"$entry_dir"/title
     else
         touch "$entry_dir"/title
     end
 
     # Write template into new entry, which user will later on edit
     set -l entry_text "$entry_dir"/body
-    set -l template __journal_entry_template 
-    "$template" >> "$entry_text"
+    set -l template __journal_entry_template
+    "$template" >>"$entry_text"
 
     # Store template in temporary file so we can
     # easily compare the template with what the user
@@ -142,9 +161,9 @@ function __journal_new
     # without making any changes, we can delete the
     # entry again.
     set -l tmpfile (mktemp)
-    "$template" > "$tmpfile"
+    "$template" >"$tmpfile"
 
-    if not set -q EDITOR 
+    if not set -q EDITOR
         exit 1
     end
 
@@ -152,7 +171,7 @@ function __journal_new
 
     # Check if files are different, meaning, check
     # if user actually made any changes to the template
-    if cmp "$entry_text" "$tmpfile" > /dev/null
+    if cmp "$entry_text" "$tmpfile" >/dev/null
         echo "You didn't change the default template, so I'll delete the entry again"
         rm -r $entry_dir
     else
@@ -161,7 +180,7 @@ function __journal_new
 end
 
 function __journal_search
-    set -l options                                 \
+    set -l options \
         (fish_opt -s t -l tags -r --multiple-vals) \
         (fish_opt -s T -l title -r)
     argparse -i $options -- $argv
@@ -228,13 +247,27 @@ function journal -a cmd -d "Fish journal"
             __journal_list_titles
         case search
             set -e argv[1]
-            __journal_search
+            __journal_search $argv
         case list
             set -e argv[1]
-            __journal_list
+            __journal_list $argv
+        case help
+            set -e argv[1]
+            __journal_help
         case \*
             set -e argv[1]
-            __journal_new
+            __journal_new $argv
     end
 end
-#!/usr/bin/env fish
+
+function __journal_help
+    echo "usage: journal help/--help/-h     Show this help"
+    echo "       journal list               List all journal entries"
+    echo "               -n/--number        Maximum number of entries to show"
+    echo "               -f/--filename-only Show only the filenames instead of the entire entry"
+    echo "                                  Useful for piping the output into other programs"
+    echo "               -F/--from [DATE]   Show only entries where date is greater than or equal to"
+    echo "                                  [DATE]. Date needs to be a string that can be understood"
+    echo "                                  by the date utlity. For example:"
+    echo "                                  journal list --from 'June 1' "
+end
