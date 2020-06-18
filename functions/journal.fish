@@ -276,19 +276,56 @@ function journal -a cmd -d "Fish journal"
             set -e argv[1]
             __journal_help
         case \*
-            set -e argv[1]
             __journal_new $argv
     end
 end
 
 function __journal_help
-    echo "usage: journal help/--help/-h     Show this help"
-    echo "       journal list               List all journal entries"
-    echo "               -n/--number        Maximum number of entries to show"
-    echo "               -f/--filename-only Show only the filenames instead of the entire entry"
-    echo "                                  Useful for piping the output into other programs"
-    echo "               -F/--from [DATE]   Show only entries where date is greater than or equal to"
-    echo "                                  [DATE]. Date needs to be a string that can be understood"
-    echo "                                  by the date utlity. For example:"
-    echo "                                  journal list --from 'June 1' "
+    echo 'Usage:'
+    echo 'journal help/--help/-h     Show this help'
+    echo ''
+    echo 'journal                    Open $EDITOR to create a new journal entry'
+    echo '        -t/--tag   TAG     Can be passed multiple times'
+    echo '                           Each passed value will be one tag of the new entry'
+    echo '        -T/--title TITLE   Title for journal entry'
+    echo '        -d/--date  DATE    Date to be used for date of entry'
+    echo '                           Must be date with standard formatting'
+    echo '                           Create journal entry for yesterday on MacOS/BSD:'
+    echo '                           Example: journal -d (LANG=da_DK.iso_8859-1 date -v-1d)'
+    echo ''
+    echo '                           Using LANG has no effect, since the names in which'
+    echo '                           date string components are written doesn\'t matter'
+    echo '                           You just shouldn\'t change the order of the date components'    
+    echo '                           Internally dates are reformatted anyway'
+    echo '                           Also see --from help below'
+    echo ''
+    echo 'journal list               List all journal entries'
+    echo '        -n/--number        Maximum number of entries to show'
+    echo '        -f/--filename-only Show only the filenames instead of the entire entry'
+    echo '                           Useful for piping the output into other programs'
+    echo '        -F/--from DATE     Show only entries where date is greater than or equal to'
+    echo '                           DATE. The value of DATE depends on whether you (want?)'
+    echo '                           to use BSD date (MacOS) or GNU date (Linux).'
+    echo ''
+    echo '                           All entries since yesterday:'
+    echo '                           BSD/MacOS: journal list --from (date -v-1d)'
+    echo '                           GNU/Linux: journal list --from (date -d 'yesterday')'
+    echo ''
+    echo '                           Either way, please pass a DATE using the standard formatting'
+    echo '        -U/--until DATE    Show only entries where date is less than or equal to'
+    echo '                           DATE. For the description of DATE, please see help text for'
+    echo '                           --from flag'
+    echo ''
+    echo 'journal search             Search all journal entries'
+    echo '        -t/--tags TAG      Can be passed multiple times'
+    echo '                           Show only entries which match all values passed as TAG'
+    echo '                           Show all entries matching foo AND bar'
+    echo '                           journal search -t foo -t bar'
+    echo '        -T/--title TITLE   Show only entries whose title is contained in TITLE'
+    echo '                           Show all entries where title includes foo'
+    echo '                           journal search -T foo'
+    echo '        -n/--number        See help for journal list --number'
+    echo '        -f/--filename-only See help for journal list --filename-only'
+    echo '        -F/--from DATE     See help for journal list --from'
+    echo '        -U/--until DATE    See help for journal list --until'
 end
