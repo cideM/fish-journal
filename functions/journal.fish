@@ -47,6 +47,8 @@ function __journal_list_entries_sorted
 
         # --from
         if set -q _flag_F
+            # This kind of date usage doesn't work on MacOS since the -d
+            # flag for BSD date does something completely different than in GNU
             set -l cmp_date (date -d $_flag_F +$__fish_journal_date_format)
             echo $cmp_date
             if not test (expr $cmp_date "<=" $date_entry) -ne 0
