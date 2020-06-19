@@ -29,7 +29,6 @@ function __journal_date_lexicographic
     end
 end
 
-# TODO: name functions etc in the same way not some fish__ and others __jorunal
 function __journal_dir_name
     echo $FISH_JOURNAL_DIR/(random 100000 1000000)
 end
@@ -51,6 +50,10 @@ function __journal_list_entries_sorted
     end
 
     set -l date_range_result
+
+    if set -q _flag_n; and test $_flag_n -eq 0
+        return
+    end
 
     # Compare the date of each entry against the --from and --until values
     # by using "expr" and lexicographic comparison
@@ -99,17 +102,6 @@ function __journal_list_entries_sorted
             cat $path/title
             cat $path/body
         end
-    end
-end
-
-function __journal_list
-    # This avoids errors from failed glob matches
-    set -l matches $FISH_JOURNAL_DIR/*
-
-    if test (count $matches) -gt 0
-        __journal_list_entries_sorted $matches $argv
-    else
-        echo "No journal entries found in $FISH_JOURNAL_DIR"
     end
 end
 
@@ -262,8 +254,7 @@ function journal -a cmd -d "Fish journal"
         __journal_help
         return
     end
-
-    switch "$cmd"
+switch "$cmd"
         case tags
             __journal_list_tags
         case titles
@@ -271,14 +262,12 @@ function journal -a cmd -d "Fish journal"
         case search
             set -e argv[1]
             __journal_search $argv
-        case list
+        case new
             set -e argv[1]
-            __journal_list $argv
-        case help
+            __journal_new $argv
+        case \*
             set -e argv[1]
             __journal_help
-        case \*
-            __journal_new $argv
     end
 end
 
@@ -286,7 +275,7 @@ function __journal_help
     echo 'Usage:'
     echo 'journal help/--help/-h     Show this help'
     echo ''
-    echo 'journal                    Open $EDITOR to create a new journal entry'
+    echo 'journal new                Open $EDITOR to create a new journal entry'
     echo '        -t/--tag   TAG     Can be passed multiple times'
     echo '                           Each passed value will be one tag of the new entry'
     echo '        -T/--title TITLE   Title for journal entry'
@@ -301,7 +290,7 @@ function __journal_help
     echo '                           Internally dates are reformatted anyway'
     echo '                           Also see --from help below'
     echo ''
-    echo 'journal list               List all journal entries'
+    echo 'journal search             List journal entries (without options, list all entries)'
     echo '        -n/--number        Maximum number of entries to show'
     echo '        -f/--filename-only Show only the filenames instead of the entire entry'
     echo '                           Useful for piping the output into other programs'
@@ -317,8 +306,6 @@ function __journal_help
     echo '        -U/--until DATE    Show only entries where date is less than or equal to'
     echo '                           DATE. For the description of DATE, please see help text for'
     echo '                           --from flag'
-    echo ''
-    echo 'journal search             Search all journal entries'
     echo '        -t/--tags TAG      Can be passed multiple times'
     echo '                           Show only entries which match all values passed as TAG'
     echo '                           Show all entries matching foo AND bar'
@@ -326,10 +313,6 @@ function __journal_help
     echo '        -T/--title TITLE   Show only entries whose title is contained in TITLE'
     echo '                           Show all entries where title includes foo'
     echo '                           journal search -T foo'
-    echo '        -n/--number        See help for journal list --number'
-    echo '        -f/--filename-only See help for journal list --filename-only'
-    echo '        -F/--from DATE     See help for journal list --from'
-    echo '        -U/--until DATE    See help for journal list --until'
     echo ''
     echo 'Customziations:'
     echo 'You can customize the default template, meaning the text that will be'      
