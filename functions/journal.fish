@@ -6,24 +6,29 @@ set -q XDG_DATA_DIR; or set XDG_DATA_DIR "$HOME/.local/share"
 set -q FISH_JOURNAL_DIR; or set FISH_JOURNAL_DIR "$XDG_DATA_DIR/fish_journal"
 set -q FISH_JOURNAL_EXTENSION; or set FISH_JOURNAL_EXTENSION ".md"
 
-set __fish_journal_date_format "%Y-%m-%d %T"
+# Date format which can be sorted lexicographicically Means you can 
+# sort dates by their character value. 2020 > 2019 then month 05 > 04, 
+# and so on
+set __journal_date_format "%Y-%m-%d %T"
 
+# Override this function to pass your own template
+set -q __journal_entry_template; 
+or set __journal_entry_template (\
 function __journal_entry_template
     echo ""
-end
+end)
 
-# Takes a date string and formats it in a way, so that
-# it can be used for lexicographic sorting
+# Takes a date string and formats it in a way which can be used for 
+# lexicographic sorting. Works with BSD and GNU date.
 function __journal_date_lexicographic
     # This kinda sorta detects if we're dealing with GNU or BSD date
     if date --version >/dev/null 2>&1
-        echo (date -d $argv[1] +$__fish_journal_date_format)
+        echo (date -d $argv[1] +$__journal_date_format)
     else
-        echo (date -j -f "%a %b %d %T %Z %Y" $argv[1] +$__fish_journal_date_format)
+        echo (date -j -f "%a %b %d %T %Z %Y" $argv[1] +$__journal_date_format)
     end
 end
 
-# TODO: Usage
 # TODO: name functions etc in the same way not some fish__ and others __jorunal
 function __journal_dir_name
     echo $FISH_JOURNAL_DIR/(random 100000 1000000)
@@ -236,9 +241,6 @@ function __journal_search
     end
 
     if test -n "$results_dirs"
-        # Passing $argv here will include the options
-        # that were already parsed. According to the Fish
-        # docs this shouldn't be the case. TODO: Create bug report
         __journal_list_entries_sorted $results_dirs $argv
     end
 end
@@ -328,4 +330,9 @@ function __journal_help
     echo '        -f/--filename-only See help for journal list --filename-only'
     echo '        -F/--from DATE     See help for journal list --from'
     echo '        -U/--until DATE    See help for journal list --until'
+    echo ''
+    echo 'Customziations:'
+    echo 'You can customize the default template, meaning the text that will be'      
+    echo 'shown when $EDITOR is opened. Just override __journal_entry_template, like so:'
+    echo '$ function __journal_entry_template; echo "foo"; end; journal'
 end
