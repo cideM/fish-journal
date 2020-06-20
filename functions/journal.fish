@@ -100,7 +100,7 @@ function __journal_list_entries_sorted
             echo $path
             cat $path/date
             cat $path/title
-            cat $path/body
+            fold -s < $path/body
         end
     end
 end
