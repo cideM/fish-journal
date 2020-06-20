@@ -103,7 +103,7 @@ function __journal_list_entries_sorted
             echo $path
             cat $path/date
             cat $path/title
-            fold -s < $path/body
+            fold -s < $path/body*
         end
     end
 end
@@ -167,7 +167,7 @@ function __journal_new
     end
 
     # Write template into new entry, which user will later on edit
-    set -l entry_text "$entry_dir"/body
+    set -l entry_text "$entry_dir"/body$FISH_JOURNAL_EXTENSION
     set -l template __journal_entry_template
     "$template" >>"$entry_text"
 
