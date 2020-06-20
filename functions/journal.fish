@@ -264,25 +264,32 @@ end
 function journal -a cmd -d "Fish journal"
     set -l options \
         (fish_opt -s h -l help)
+
     argparse -i $options -- $argv
     if not argparse -i $options -- $argv
         echo "failed to parse arguments" 1>&2
         return
     end
 
-    if set -q _flag_h
-        __journal_help
-        return
-    end
-switch "$cmd"
+    switch "$cmd"
         case tags
             __journal_list_tags
         case titles
             __journal_list_titles
         case search
+            if set -q _flag_h
+                __journal_help_search
+                return
+            end
+
             set -e argv[1]
             __journal_search $argv
         case new
+            if set -q _flag_h
+                __journal_help_new
+                return
+            end
+
             set -e argv[1]
             __journal_new $argv
         case \*
@@ -291,25 +298,7 @@ switch "$cmd"
     end
 end
 
-function __journal_help
-    echo 'Usage:'
-    echo 'journal help/--help/-h     Show this help'
-    echo ''
-    echo 'journal new                Open $EDITOR to create a new journal entry'
-    echo '        -t/--tag   TAG     Can be passed multiple times'
-    echo '                           Each passed value will be one tag of the new entry'
-    echo '        -T/--title TITLE   Title for journal entry'
-    echo '        -d/--date  DATE    Date to be used for date of entry'
-    echo '                           Must be date with standard formatting'
-    echo '                           Create journal entry for yesterday on MacOS/BSD:'
-    echo '                           Example: journal -d (LANG=da_DK.iso_8859-1 date -v-1d)'
-    echo ''
-    echo '                           Using LANG has no effect, since the names in which'
-    echo '                           date string components are written doesn\'t matter'
-    echo '                           You just shouldn\'t change the order of the date components'    
-    echo '                           Internally dates are reformatted anyway'
-    echo '                           Also see --from help below'
-    echo ''
+function __journal_help_search
     echo 'journal search             List journal entries (without options, list all entries)'
     echo '        -n/--number        Maximum number of entries to show'
     echo '        -f/--filename-only Show only the filenames instead of the entire entry'
@@ -333,6 +322,32 @@ function __journal_help
     echo '        -T/--title TITLE   Show only entries whose title is contained in TITLE'
     echo '                           Show all entries where title includes foo'
     echo '                           journal search -T foo'
+end
+
+function __journal_help_new
+    echo 'journal new                Open $EDITOR to create a new journal entry'
+    echo '        -t/--tag   TAG     Can be passed multiple times'
+    echo '                           Each passed value will be one tag of the new entry'
+    echo '        -T/--title TITLE   Title for journal entry'
+    echo '        -d/--date  DATE    Date to be used for date of entry'
+    echo '                           Must be date with standard formatting'
+    echo '                           Create journal entry for yesterday on MacOS/BSD:'
+    echo '                           Example: journal -d (LANG=da_DK.iso_8859-1 date -v-1d)'
+    echo ''
+    echo '                           Using LANG has no effect, since the names in which'
+    echo '                           date string components are written doesn\'t matter'
+    echo '                           You just shouldn\'t change the order of the date components'    
+    echo '                           Internally dates are reformatted anyway'
+    echo '                           Also see --from help below'
+end
+
+function __journal_help
+    echo 'Usage:'
+    echo 'journal help/--help/-h     Show this help'
+    echo ''
+    __journal_help_new
+    echo ''
+    __journal_help_search
     echo ''
     echo 'Customziations:'
     echo 'You can customize the default template, meaning the text that will be'      
