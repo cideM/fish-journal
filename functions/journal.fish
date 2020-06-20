@@ -39,7 +39,10 @@ function __journal_list_entries_sorted
         (fish_opt -s f -l filename-only) \
         (fish_opt -s F -l from -r) \
         (fish_opt -s U -l until -r)
-    argparse -i $options -- $argv
+    if not argparse -i $options -- $argv
+        echo "failed to parse arguments" 1>&2
+        return
+    end
 
     set -l number_entries_to_show
 
@@ -136,6 +139,10 @@ function __journal_new
         (fish_opt -s d -l date -r)
 
     argparse $options -- $argv
+    if not argparse -i $options -- $argv
+        echo "failed to parse arguments" 1>&2
+        return
+    end
 
     # Store date
     if set -q _flag_d
@@ -193,6 +200,10 @@ function __journal_search
         (fish_opt -s t -l tags -r --multiple-vals) \
         (fish_opt -s T -l title -r)
     argparse -i $options -- $argv
+    if not argparse -i $options -- $argv
+        echo "failed to parse arguments" 1>&2
+        return
+    end
 
     # For each category (tags, title), find all matches. Then return 
     # the intersection of the matches. That's how this search works in a 
@@ -203,6 +214,11 @@ function __journal_search
     # for the given title, return the intersection of the title matches 
     # (one file) and the tag matches (all files).
     set -l tag_results $FISH_JOURNAL_DIR/*/tags
+
+    if test (count $tag_results) -eq 0
+        echo "You don't have any journal entries yet!"
+        return
+    end
 
     if set -q _flag_t
         for tag in $_flag_t
@@ -249,6 +265,10 @@ function journal -a cmd -d "Fish journal"
     set -l options \
         (fish_opt -s h -l help)
     argparse -i $options -- $argv
+    if not argparse -i $options -- $argv
+        echo "failed to parse arguments" 1>&2
+        return
+    end
 
     if set -q _flag_h
         __journal_help
