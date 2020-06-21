@@ -58,9 +58,11 @@ function __journal_list_entries_sorted
         return
     end
 
+    echo $argv
+
     # Compare the date of each entry against the --from and --until values
     # by using "expr" and lexicographic comparison
-    for v in $argv[1..$number_entries_to_show]
+    for v in $argv
         set -l pass 1
 
         set -l date_entry (cat $v/date)
@@ -93,7 +95,7 @@ function __journal_list_entries_sorted
     # entrys' "date" file. Use lexicographic sort thanks to the date format
     set -l sorted (for v in $date_range_result; printf '%s "%s"\n' $v (cat $v/date); end | sort -k2 -r | awk '{ print $1 }')
 
-    for path in $sorted
+    for path in $sorted[1..$number_entries_to_show]
         if set -q _flag_f
             for f in $path/*
                 echo $f
