@@ -353,4 +353,10 @@ function __journal_help
     echo 'You can customize the default template, meaning the text that will be'      
     echo 'shown when $EDITOR is opened. Just override __journal_entry_template, like so:'
     echo '$ function __journal_entry_template; echo "foo"; end; journal'
+    echo ''
+    echo 'FISH_JOURNAL_DIR can be used to store the journal in a custom location'
+    echo 'set FISH_JOURNAL_DIR ~/my_journal; journal new'
+    echo ''
+    echo 'FISH_JOURNAL_EXTENSION determines the file extension of new entries'
+    echo 'set FISH_JOURNAL_EXTENSION '.md'; journal new'
 end
