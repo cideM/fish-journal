@@ -58,8 +58,6 @@ function __journal_list_entries_sorted
         return
     end
 
-    echo $argv
-
     # Compare the date of each entry against the --from and --until values
     # by using "expr" and lexicographic comparison
     for v in $argv
