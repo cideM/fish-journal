@@ -12,7 +12,7 @@ set -q FISH_JOURNAL_EXTENSION; or set FISH_JOURNAL_EXTENSION ".md"
 set __journal_date_format "%Y-%m-%d %T"
 
 # Override this function to pass your own template
-set -q __journal_entry_template; 
+set -q __journal_entry_template
 or set __journal_entry_template (\
 function __journal_entry_template
     echo ""
@@ -103,7 +103,7 @@ function __journal_list_entries_sorted
             echo $path
             cat $path/date
             cat $path/title
-            fold -s < $path/body*
+            fold -s <$path/body*
         end
     end
 end
@@ -183,7 +183,7 @@ function __journal_new
         exit 1
     end
 
-    "$EDITOR" "$entry_text"
+    $EDITOR "$entry_text"
 
     # Check if files are different, meaning, check
     # if user actually made any changes to the template
@@ -336,7 +336,7 @@ function __journal_help_new
     echo ''
     echo '                           Using LANG has no effect, since the names in which'
     echo '                           date string components are written doesn\'t matter'
-    echo '                           You just shouldn\'t change the order of the date components'    
+    echo '                           You just shouldn\'t change the order of the date components'
     echo '                           Internally dates are reformatted anyway'
     echo '                           Also see --from help below'
 end
@@ -350,7 +350,7 @@ function __journal_help
     __journal_help_search
     echo ''
     echo 'Customziations:'
-    echo 'You can customize the default template, meaning the text that will be'      
+    echo 'You can customize the default template, meaning the text that will be'
     echo 'shown when $EDITOR is opened. Just override __journal_entry_template, like so:'
     echo '$ function __journal_entry_template; echo "foo"; end; journal'
     echo ''
