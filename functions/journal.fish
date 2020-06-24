@@ -258,11 +258,19 @@ function __journal_search
 end
 
 function __journal_list_tags
-    cat $FISH_JOURNAL_DIR/*/tags
+    cat $FISH_JOURNAL_DIR/*/tags \
+    | sed '/^$/d'                \
+    | string join " "            \
+    | string split " "           \
+    | sort                       \
+    | uniq
 end
 
 function __journal_list_titles
-    cat $FISH_JOURNAL_DIR/*/title
+    cat $FISH_JOURNAL_DIR/*/title\
+    | sed '/^$/d'                \
+    | sort                       \
+    | uniq
 end
 
 function journal -a cmd -d "Fish journal"
