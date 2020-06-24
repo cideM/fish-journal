@@ -154,7 +154,7 @@ function __journal_new
     end
 
     # Store tags
-    echo "" >"$entry_dir"/tags
+    touch "$entry_dir"/tags
     if set -q _flag_t
         for tag in "$_flag_t"
             echo "$tag" >>"$entry_dir"/tags
@@ -163,7 +163,7 @@ function __journal_new
         touch "$entry_dir"/tags
     end
 
-    echo "" >"$entry_dir"/title
+    touch >"$entry_dir"/title
     if set -q _flag_T
         echo "$_flag_T" >"$entry_dir"/title
     else
