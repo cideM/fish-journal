@@ -116,3 +116,7 @@ journal search -f | while read -la v; rm -r (dirname $v) 2>/dev/null; end
 ### How can I customize the template, file extension and base folder?
 
 See 'Customization' above
+
+## TODO
+
+- [ ] Add option for only showing titles
