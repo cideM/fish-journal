@@ -101,8 +101,10 @@ function __journal_list_entries_sorted
         else
             echo '--------------------'
             echo $path
-            cat $path/date
-            cat $path/title
+            printf 'Date: %s\n' (cat $path/date)
+            printf 'Tags: %s\n' (cat $path/tags)
+            echo ''
+            printf 'Title: %s\n' (cat $path/title)
             fold -s <$path/body*
         end
     end
