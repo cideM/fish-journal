@@ -163,7 +163,7 @@ function __journal_new
         touch "$entry_dir"/tags
     end
 
-    touch >"$entry_dir"/title
+    touch "$entry_dir"/title
     if set -q _flag_T
         echo "$_flag_T" >"$entry_dir"/title
     else
