@@ -41,7 +41,7 @@ function __journal_list_entries_sorted
         (fish_opt -s U -l until -r)
     if not argparse -i $options -- $argv
         echo "failed to parse arguments" 1>&2
-        return
+        return 1
     end
 
     set -l number_entries_to_show
@@ -55,7 +55,7 @@ function __journal_list_entries_sorted
     set -l date_range_result
 
     if set -q _flag_n; and test $_flag_n -eq 0
-        return
+        return 0
     end
 
     # Compare the date of each entry against the --from and --until values
@@ -119,7 +119,7 @@ function __journal_new
 
     if test \( -d "$FISH_JOURNAL_DIR" \) -a \( -f "$FISH_JOURNAL_DIR" \)
         echo "$FISH_JOURNAL_DIR is a file, exiting"
-        exit 1
+        return 1
     end
 
     set -l entry_dir (__journal_dir_name)
@@ -131,7 +131,7 @@ function __journal_new
         echo "Please just create a new entry one more time."
         echo "If the problem persists, please create an issue"
         echo "on https://github.com/cideM/fish-journal/"
-        exit 1
+        return 1
     end
     mkdir -p "$entry_dir"
 
@@ -143,7 +143,7 @@ function __journal_new
     argparse $options -- $argv
     if not argparse -i $options -- $argv
         echo "failed to parse arguments" 1>&2
-        return
+        return 1
     end
 
     # Store date
@@ -184,7 +184,7 @@ function __journal_new
     "$template" >"$tmpfile"
 
     if not set -q EDITOR
-        exit 1
+        return 1
     end
 
     $EDITOR "$entry_text"
@@ -206,7 +206,7 @@ function __journal_search
     argparse -i $options -- $argv
     if not argparse -i $options -- $argv
         echo "failed to parse arguments" 1>&2
-        return
+        return 1
     end
 
     # For each category (tags, title), find all matches. Then return 
@@ -221,7 +221,7 @@ function __journal_search
 
     if test (count $tag_results) -eq 0
         echo "You don't have any journal entries yet!"
-        return
+        return 0
     end
 
     if set -q _flag_t
@@ -280,7 +280,7 @@ function journal -a cmd -d "Fish journal"
     argparse -i $options -- $argv
     if not argparse -i $options -- $argv
         echo "failed to parse arguments" 1>&2
-        return
+        return 1
     end
 
     switch "$cmd"
@@ -291,7 +291,7 @@ function journal -a cmd -d "Fish journal"
         case search
             if set -q _flag_h
                 __journal_help_search
-                return
+                return 0
             end
 
             set -e argv[1]
@@ -299,7 +299,7 @@ function journal -a cmd -d "Fish journal"
         case new
             if set -q _flag_h
                 __journal_help_new
-                return
+                return 0
             end
 
             set -e argv[1]
