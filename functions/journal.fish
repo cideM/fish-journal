@@ -156,7 +156,7 @@ function __journal_new
     # Store tags
     touch "$entry_dir"/tags
     if set -q _flag_t
-        for tag in "$_flag_t"
+        for tag in $_flag_t
             echo "$tag" >>"$entry_dir"/tags
         end
     else
