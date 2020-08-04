@@ -209,6 +209,12 @@ function __journal_search
         return 1
     end
 
+    set -l results (for result in $FISH_JOURNAL_DIR/*/body*; dirname $result; end)
+    if test (count $results) -eq 0
+        echo "You don't have any journal entries yet!"
+        return 0
+    end
+
     # For each category (tags, title), find all matches. Then return 
     # the intersection of the matches. That's how this search works in a 
     # nutshell and most of the code is plumbing and boilerplate since Fish 
@@ -217,43 +223,25 @@ function __journal_search
     # tags to search, consider all files to match. So if we have one match 
     # for the given title, return the intersection of the title matches 
     # (one file) and the tag matches (all files).
-    set -l tag_results $FISH_JOURNAL_DIR/*/tags
-
-    if test (count $tag_results) -eq 0
-        echo "You don't have any journal entries yet!"
-        return 0
-    end
 
     if set -q _flag_t
         for tag in $_flag_t
-            set tag_results (grep -l "$tag" $tag_results)
+            # Ignore "file not found" because if a post doesn't have a tags
+            # file then we can just ignore it. Same for title.
+            set results (grep -l "$tag" $results/tags 2> /dev/null | while read -la result
+                dirname $result
+            end)
         end
     end
-
-    set -l title_results $FISH_JOURNAL_DIR/*/title
 
     if set -q _flag_T
-        set title_results (grep -l "$_flag_T" $title_results)
+        set results (grep -l "$_flag_T" $results/title 2> /dev/null | while read -la result
+            dirname $result
+        end)
     end
 
-    # Remove the /title suffix so that we can compare matches from 
-    # different categories by dirname
-    set -l title_results_dirs
-    for path in $title_results
-        set -a title_results_dirs (dirname $path)
-    end
-
-    set -l results_dirs
-    for path in $tag_results
-        set -l dir (dirname $path)
-
-        if contains $dir $title_results_dirs
-            set -a results_dirs $dir
-        end
-    end
-
-    if test -n "$results_dirs"
-        __journal_list_entries_sorted $results_dirs $argv
+    if test -n "$results"
+        __journal_list_entries_sorted $results $argv
     end
 end
 
