@@ -103,6 +103,7 @@ function __journal_list_entries_sorted
             echo $path
             printf 'Date: %s\n' (cat $path/date)
             printf 'Tags: %s\n' (cat $path/tags)
+            printf 'Mood: %s\n' (cat $path/mood 2> /dev/null)
             echo ''
             printf 'Title: %s\n' (cat $path/title)
             fold -s <$path/body*
@@ -135,12 +136,12 @@ function __journal_new
     end
     mkdir -p "$entry_dir"
 
-    set -l options \
+    set -l options                                 \
         (fish_opt -s t -l tags -r --multiple-vals) \
-        (fish_opt -s T -l title -r) \
-        (fish_opt -s d -l date -r)
+        (fish_opt -s T -l title -r)                \
+        (fish_opt -s d -l date -r)                 \
+        'm/mood=!_validate_int --min 0 --max 5'
 
-    argparse $options -- $argv
     if not argparse -i $options -- $argv
         echo "failed to parse arguments" 1>&2
         return 1
@@ -151,6 +152,11 @@ function __journal_new
         __journal_date_lexicographic $_flag_d >$entry_dir/date
     else
         __journal_date_lexicographic (date) >$entry_dir/date
+    end
+
+    # Store mood
+    if set -q _flag_m
+        echo $_flag_m >$entry_dir/mood
     end
 
     # Store tags
@@ -329,6 +335,7 @@ function __journal_help_new
     echo '        -t/--tag   TAG     Can be passed multiple times'
     echo '                           Each passed value will be one tag of the new entry'
     echo '        -T/--title TITLE   Title for journal entry'
+    echo '        -m/--mood  MOOD    Mood, should be numeric'
     echo '        -d/--date  DATE    Date to be used for date of entry'
     echo '                           Must be date with standard formatting'
     echo '                           Create journal entry for yesterday on MacOS/BSD:'

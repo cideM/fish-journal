@@ -14,6 +14,7 @@ complete -c journal -n "not __fish_seen_subcommand_from $commands" -a "search" -
 # Switch/options completion
 complete -c journal -s h -l help            -d "Help"
 complete -c journal -s t -l tags            -n "__fish_seen_subcommand_from search new" -d "Tags" -a "(journal tags)"   -r -f
+complete -c journal -s m -l mood            -n "__fish_seen_subcommand_from search new" -d "Mood" -r -f
 complete -c journal -s T -l title           -n "__fish_seen_subcommand_from search new" -d "Title" -a "(journal titles)"  -r -f
 complete -c journal -s d -l date            -n "__fish_seen_subcommand_from new"        -d "Entry date"  -r
 complete -c journal -s f -l "filename-only" -n "__fish_seen_subcommand_from search"     -d "list only filenames"
